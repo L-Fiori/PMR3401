@@ -32,14 +32,22 @@ while iter
             if((i-1)*dx == 0 || (i-1)*dx == 22 || (j-1)*dy == 10 || ((i-1)*dx == 20 && ((j-1)*dy >= 6 && (j-1) < 10) || ((i-1)*dx > 20 && (i-1)*dx < 22 && (j-1)*dy == 6)))
                 Az(j, i) = 0;
                 
-            % Caso o ponto pertenca a bobina
-            elseif((((i-1)*dx > 14 && (i-1)*dx < 16) || ((i-1)*dx > 20 && (i-1)*dx < 22)) && ((j-1)*dy < 6))
+            % Caso o ponto pertenca a bobina lado esquerdo
+            elseif(((i-1)*dx > 14 && (i-1)*dx < 16) && ((j-1)*dy < 6))
                 if(j == 1)
-                    Az(j,i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1) + (dx^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)/0.12) + 8*10^5)) / 4;
+                    Az(j,i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1) - ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
                 else
-                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) + Az(j, i-1) + (dx^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)/0.12) + 8*10^5)) / 4;
+                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) - Az(j, i-1) + ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
                 end
-
+                
+            % Caso o ponto pertenca a bobina lado direito
+            elseif(((i-1)*dx > 20 && (i-1)*dx < 22) && ((j-1)*dy < 6))
+                if(j == 1)
+                    Az(j,i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1) + ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
+                else
+                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) + Az(j, i-1) + ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
+                end
+                
             elseif((i-1)*dx == 4)
                 % Fronteira vertical ferro-ar
                 front_v = true;
@@ -113,6 +121,7 @@ while iter
             % Armazena o maior valor do erro em modulo
             current_E = abs((Az(j,i) - Az_old)/Az(j, i));
             if (current_E > highest_E)
+                count
                 j
                 i
                 highest_E = current_E
@@ -128,6 +137,8 @@ while iter
     count = count + 1;
 
 end
+
+Az
 
 display('Iteracoes: ')
 count
