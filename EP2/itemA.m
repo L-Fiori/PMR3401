@@ -11,82 +11,80 @@ mi_ferro = 2500*mi_0;
 mi_ar = 1*mi_0;
 mi_b = mi_ar;
 
-iter = true; % so para de iterar quando iter for false
-count = 0; % Contador de iteracoes
+iter = true; 
+count = 0; 
 lambda = 1.75;
 E = 0.0001;
 
-while iter == true
+front_v = false;
+front_h = false;
+
+while iter
     highest_E = 0;
-    for j = 1:(10/dy)
-        for i = 2:(22/dx)
+    for j = 1:((10/dy) + 1)
+        for i = 2:((22/dx) + 1)
+            front_v = false;
+            front_h = false;
+
             Az_old = Az(j, i);
             
             % Caso o ponto pertenca ao contorno
-            if(i*dx == 0 || i*dx == 22 || j*dy == 10 || (i*dx == 20 &&(j*dy >= 6 && j < 10) || (i*dx > 20 && i*dx < 22 && j*dy == 6)))
-                continue
+            if((i-1)*dx == 0 || (i-1)*dx == 22 || (j-1)*dy == 10 || ((i-1)*dx == 20 && ((j-1)*dy >= 6 && (j-1) < 10) || ((i-1)*dx > 20 && (i-1)*dx < 22 && (j-1)*dy == 6)))
+                Az(j, i) = 0;
                 
             % Caso o ponto pertenca a bobina
-            elseif(((i*dx > 14 && i*dx < 16) || (i*dx > 20 && i*dx < 22)) && (j*dy < 6))
+            elseif((((i-1)*dx > 14 && (i-1)*dx < 16) || ((i-1)*dx > 20 && (i-1)*dx < 22)) && ((j-1)*dy < 6))
                 if(j == 1)
-                    Az(j,i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1) + (dx^2)*mi_b*(2*(10^6)*cos((pi*i/dy)/0.12) + 8*10^5)) / 4;
+                    Az(j,i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1) + (dx^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)/0.12) + 8*10^5)) / 4;
                 else
-                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) + Az(j, i-1) + (dx^2)*mi_b*(2*(10^6)*cos((pi*i/dy)/0.12) + 8*10^5)) / 4;
+                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) + Az(j, i-1) + (dx^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)/0.12) + 8*10^5)) / 4;
                 end
 
-            elseif(i*dx == 4)
+            elseif((i-1)*dx == 4)
                 % Fronteira vertical ferro-ar
-                if(j == 1)
-                    Az(j, i) = (1/(4*((mi_ar/mi_ferro) + 1)))*(((mi_ar/mi_ferro) + 1)*2*Az(j+1, i) + 2*(Az(j, i+1) + (mi_ar/mi_ferro)*Az(j, i-1)));
-                else
-                    Az(j, i) = (1/(4*((mi_ar/mi_ferro) + 1)))*(((mi_ar/mi_ferro) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_ar/mi_ferro)*Az(j, i-1)));
-                end
- 
-            elseif(i*dx == 5 && j*dy >= 6)
+                front_v = true;
+                mi_2 = mi_ar;
+                mi_1 = mi_ferro;
+
+            elseif((i-1)*dx == 5 && (j-1)*dy >= 6)
                 % Fronteira vertical ar-ferro
-                if(j*dy == 6)
-                    Az(j, i) = (1/(4*((mi_ferro/mi_ar) + 1))) * ((mi_ferro/mi_ar)*(Az(j-1, i) + Az(j, i-1)) + Az(j+1, i) + Az(j, i+1));
+                if((j-1)*dy == 6)
+                    Az(j, i) = (1/(4*((mi_ferro/mi_ar) + 1)))*((mi_ferro/mi_ar)*(Az(j-1, i) + Az(j, i-1)) + Az(j+1, i) + Az(j, i+1));
                 else 
                     Az(j, i) = (1/(4*((mi_ferro/mi_ar) + 1)))*(((mi_ferro/mi_ar) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_ferro/mi_ar)*Az(j, i-1)));
                 end
 
-            elseif((i*dx > 5 && i*dx < 14) && j*dy == 6)
+            elseif(((i-1)*dx > 5 && (i-1)*dx < 14) && (j-1)*dy == 6)
                 % Fronteira horizontal ar-ferro
-                Az(j, i) = (1/(4*((mi_ferro/mi_ar) + 1))) * (((mi_ferro/mi_ar) + 1)*(Az(j, i+1) + Az(j, i-1)) + 2*(Az(j+1, i) + (mi_ferro/mi_ar)*Az(j-1, i)));
-            
-            elseif((i*dx >= 14 && i*dx <= 16) && j == 6)
+                front_h = true;
+                mi_2 = mi_ferro;
+                mi_1 = mi_ar;
+                
+            elseif(((i-1)*dx >= 14 && (i-1)*dx <= 16) && (j-1)*dy == 6)
                 % Fronteira horizontal bobina-ferro
-                if(j == 1)
-                    Az(j, i) = (1/(4*((mi_ferro/mi_b) + 1))) * (((mi_ferro/mi_b) + 1)*(Az(j, i+1) + Az(j, i-1)) + 2*(Az(j+1, i) + (mi_ferro/mi_b)*Az(j+1, i)));
-                else
-                    Az(j, i) = (1/(4*((mi_ferro/mi_b) + 1))) * (((mi_ferro/mi_b) + 1)*(Az(j, i+1) + Az(j, i-1)) + 2*(Az(j+1, i) + (mi_ferro/mi_b)*Az(j-1, i)));
-                end
+                front_h = true;
+                mi_2 = mi_ferro;
+                mi_1 = mi_b;
             
-            elseif((i*dx == 14 && j*dy < 6))
+            elseif(((i-1)*dx == 14 && (j-1)*dy < 6))
                 % Fronteira vertical ar-bobina
-                if (j == 1)
-                    Az(j, i) = (1/(4*((mi_b/mi_ar) + 1))) * ((mi_b/mi_ar)*(Az(j+1, i) + Az(j, i-1)) + Az(j+1, i) + Az(j, i+1));
-                else 
-                    Az(j, i) = (1/(4*((mi_b/mi_ar) + 1)))*(((mi_b/mi_ar) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_b/mi_ar)*Az(j, i-1)));
-                end
-
-            elseif((i*dx == 16 && j*dy < 6))
+                front_v = true;
+                mi_2 = mi_b;
+                mi_1 = mi_ar;
+                
+            elseif(((i-1)*dx == 16 && (j-1)*dy < 6))
                 % Fronteira vertical bobina-ferro
-                if (j == 1)
-                    Az(j, i) = (1/(4*((mi_ferro/mi_b) + 1))) * ((mi_ferro/mi_b)*(Az(j+1, i) + Az(j, i-1)) + Az(j+1, i) + Az(j, i+1));
-                else 
-                    Az(j, i) = (1/(4*((mi_ferro/mi_b) + 1)))*(((mi_ferro/mi_b) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_ferro/mi_b)*Az(j, i-1)));
-                end
+                front_v = true;
+                mi_2 = mi_ferro;
+                mi_1 = mi_b;
             
-            elseif((i*dx == 20 && j*dy < 6))
+            elseif(((i-1)*dx == 20 && (j-1)*dy < 6))
                 % Fronteira vertical ferro-bobina
-                if (j == 1)
-                    Az(j, i) = (1/(2*((mi_b/mi_ferro) + 1))) * ((mi_b/mi_ferro)*(Az(j+1, i) + Az(j, i-1)) + Az(j+1, i) + Az(j, i+1));
-                else 
-                    Az(j, i) = (1/4*((mi_b/mi_ferro) + 1))*(((mi_b/mi_ferro) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_b/mi_ferro)*Az(j, i-1)));
-                end
+                front_v = true;
+                mi_2 = mi_b;
+                mi_1 = mi_ferro;
             
-                % Caso seja um ponto interno do dominio sem ser fronteira ou bobina (a maioria dos pontos)
+            % Caso seja um ponto interno do dominio sem ser fronteira ou bobina (a maioria dos pontos)
             else
                 if(j == 1)
                     Az(j, i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1))/4;
@@ -94,10 +92,26 @@ while iter == true
                     Az(j, i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) + Az(j, i-1))/4;
                 end
             end
-            
+           
+            if front_v
+                if(j == 1)
+                    Az(j, i) = (1/(4*((mi_2/mi_1) + 1)))*(((mi_2/mi_1) + 1)*2*Az(j+1, i) + 2*(Az(j, i+1) + (mi_2/mi_1)*Az(j, i-1)));
+                else
+                    Az(j, i) = (1/(4*((mi_2/mi_1) + 1)))*(((mi_2/mi_1) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_2/mi_1)*Az(j, i-1)));
+                end
+            end
+
+            if front_h
+                if(j == 1)
+                    Az(j, i) = (1/(4*((mi_2/mi_1) + 1)))*(((mi_2/mi_1) + 1)*(Az(j, i+1) + Az(j, i-1)) + 2*(Az(j+1, i) + (mi_2/mi_1)*Az(j+1, i)));
+                else
+                    Az(j, i) = (1/(4*((mi_2/mi_1) + 1)))*(((mi_2/mi_1) + 1)*(Az(j, i+1) + Az(j, i-1)) + 2*(Az(j+1, i) + (mi_2/mi_1)*Az(j-1, i)));
+                end
+            end
+
             Az(j,i) = lambda*Az(j,i) + (1-lambda)*Az_old;
             % Armazena o maior valor do erro em modulo
-            current_E = abs(Az(j,i) - Az_old);
+            current_E = abs((Az(j,i) - Az_old)/Az(j, i));
             if (current_E > highest_E)
                 j
                 i

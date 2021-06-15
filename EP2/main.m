@@ -6,7 +6,7 @@ y = 10;
 dx = 0.5;
 dy = 0.5;
 
-Az = zeros(y/dy, x/dx);
+Az = zeros((y/dy) + 1, (x/dx) + 1);
 
 Az_new = itemA(Az, dx, dy);
 
