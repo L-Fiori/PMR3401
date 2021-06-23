@@ -37,7 +37,7 @@ while iter
                 if(j == 1)
                     Az(j,i) = (2*Az(j+1, i) + Az(j, i+1) + Az(j, i-1) - ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
                 else
-                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) - Az(j, i-1) + ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
+                    Az(j,i) = (Az(j+1, i) + Az(j-1, i) + Az(j, i+1) + Az(j, i-1) - ((dx*0.01)^2)*mi_b*(2*(10^6)*cos((pi*(j-1)/dy)*0.01/0.12) + 8*10^5)) / 4;
                 end
                 
             % Caso o ponto pertenca a bobina lado direito
@@ -121,10 +121,7 @@ while iter
             % Armazena o maior valor do erro em modulo
             current_E = abs((Az(j,i) - Az_old)/Az(j, i));
             if (current_E > highest_E)
-                count
-                j
-                i
-                highest_E = current_E
+                highest_E = current_E;
             end 
 
         end
