@@ -1,4 +1,4 @@
-function plotA(Az, title_def, M, N)
+function plotA(Az, title_def, M, N, dx)
 
 	figure
 

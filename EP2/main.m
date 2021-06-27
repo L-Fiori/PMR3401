@@ -8,12 +8,13 @@ x = 22;
 y = 10;
 
 % Especificacao do passo
-dx = 1;
-dy = 1;
+dx = 0.1;
+dy = 0.1;
 
 M = (y/dy) + 1;
 N = (x/dx) + 1;
 
+%{
 Az = zeros(M, N);
 
 Az_new = itemA(Az, dx, dy);
@@ -29,11 +30,12 @@ for j=1:M-1
 end 
 
 title_def = 'a) Az (Wb/m) - passo ';
-plotA(Az, title_def, M, N)
+plotA(Az, title_def, M, N, dx)
+%}
 
 % Item c)
 
-[X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
+%[X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
 
 %Implementacao utilizando curl()
 
@@ -59,6 +61,7 @@ q.AutoScaleFactor = 1.4;
 
 %Implementacao utilizando diferencas finitas
 
+%{
 % Calculo de B
 
 B_x = zeros(2*M - 1, N);
@@ -167,6 +170,7 @@ for i = 2:2:n-2
 end
 
 I_y = (1/(2*mi_0))*(h*0.01/3) * s_y
+%}
 
 % Item e1)
 
@@ -184,4 +188,4 @@ for j=1:M-1
 end
 
 title_def = 'e1) Az (Wb/m) - passo ';
-plotA(Az, title_def, M, N)
+plotA(Az, title_def, M, N, dx)
