@@ -28,22 +28,8 @@ for j=1:M-1
     end
 end 
 
-figure(1)
-
-h = heatmap(Az, 'xlabel', 'x (cm)', 'ylabel', 'y (cm)', 'Colormap', flipud(hot));
-
-h.GridVisible = 'off';
-title(['a) Az (Wb/m) - passo ', num2str(dx)]);
-
-XLabels = linspace(0, 22, N);
-CustomXLabels = string(XLabels);
-CustomXLabels(mod(XLabels, 2) ~= 0) = " ";
-h.XDisplayLabels = CustomXLabels;
-
-YLabels = linspace(10, -10, 2*M-1);
-CustomYLabels = string(YLabels);
-CustomYLabels(mod(YLabels, 2) ~= 0) = " ";
-h.YDisplayLabels = CustomYLabels;
+title_def = 'a) Az (Wb/m) - passo ';
+plotA(Az, title_def, M, N)
 
 % Item c)
 
@@ -184,3 +170,18 @@ I_y = (1/(2*mi_0))*(h*0.01/3) * s_y
 
 % Item e1)
 
+Az = zeros(M, N);
+Az_new = itemE1(Az, dx, dy);
+
+Az = zeros(2*M-1, N);
+
+Az(M:end, :) = Az_new(:, :);
+
+for j=1:M-1
+    for i=(2:N-1)
+        Az(j, i) = Az_new(M+1-j, i);
+    end
+end
+
+title_def = 'e1) Az (Wb/m) - passo ';
+plotA(Az, title_def, M, N)
