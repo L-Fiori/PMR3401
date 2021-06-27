@@ -14,7 +14,6 @@ dy = 0.1;
 M = (y/dy) + 1;
 N = (x/dx) + 1;
 
-%{
 Az = zeros(M, N);
 
 Az_new = itemA(Az, dx, dy);
@@ -31,54 +30,12 @@ end
 
 title_def = 'a) Az (Wb/m) - passo ';
 plotA(Az, title_def, M, N, dx)
-%}
 
 % Item c)
 
-%[X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
+[X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
 
-%Implementacao utilizando curl()
-
-%{
-X(:,:,2) = ones(2*M, N)+1;
-Y(:,:,2) = ones(2*M, N)+1;
-Z(:,:,2) = ones(2*M, N)+1;
-
-
-
-F_x = zeros(2*M, N, 2);
-F_y = zeros(2*M, N, 2);
-
-Az(:, :, 2) = zeros(2*M, N);
-
-[curl_x, curl_y, curl_z, cav] = curl(X, Y, Z, F_x, F_y, Az);
-
-step = 1/dx;
-
-q = quiver(X(1:step:end, 1:step:end), Y(1:step:end, 1:step:end), curl_x(1:step:end, 1:step:end), curl_y(1:step:end, 1:step:end));
-q.AutoScaleFactor = 1.4;
-%}
-
-%Implementacao utilizando diferencas finitas
-
-%{
-% Calculo de B
-
-B_x = zeros(2*M - 1, N);
-B_y = zeros(2*M - 1, N);
-
-for j=2:length(B_x)-2
-    for i=2:(N-1)
-        % B_x = del(Az)/del(y)
-        B_x(j, i) = (Az(j+1, i) - Az(j-1, i))/(2*(dy*0.01));
-        B_y(j, i) = -((Az(j, i+1) - Az(j, i-1))/(2*(dx*0.01)));
-    end
-end
-
-step = 1/dx;
-
-%q = quiver(X(1:step:end, 1:step:end), Y(1:step:end, 1:step:end), B_x(1:step:end, 1:step:end), B_y(1:step:end, 1:step:end));
-%q.AutoScaleFactor = 1.4;
+% Montagem da matriz de mis
 
 mi = zeros(2*M-1, N);
 
@@ -89,7 +46,7 @@ mi_b = mi_ar;
 
 for j=2:2*M-2
     for i=2:(N-1)
-        if ((i-1)*dx < 4)
+        if ((i-1)*dx =< 4)
             mi(j, i) = 1/mi_ferro;
         elseif((i-1)*dx > 4 && (i-1)*dx < 5)
             mi(j, i) = 1/mi_ar;
@@ -115,65 +72,30 @@ for j=2:2*M-2
     end
 end
 
-H_x = mi.*B_x;
-H_y = mi.*B_y;
+B_x = zeros(2*M - 1, N);
+B_y = zeros(2*M - 1, N);
 
-%q_h = quiver(X(1:step:end, 1:step:end), Y(1:step:end, 1:step:end), H_x(1:step:end, 1:step:end), H_y(1:step:end, 1:step:end));
-%q_h.AutoScaleFactor = 1.4;
+[B_x, B_y, H_x, H_y] = itemC(Az, B_x, B_y, dx, dy, N, mi);
 
+step = 1/dx;
 
-%{ 
-q = quiver(X(1:step:end, 1:step:end), Y(1:step:end, 1:step:end), curl_x(1:step:end, 1:step:end), curl_y(1:step:end, 1:step:end));
-q.AutoScaleFactor = 1.4;
-%}
+titledef_B = 'Campo vetorial B (T) - passo ';
+titledef_H = 'Campo vetorial H (A/m^2) - passo ';
 
+plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H)
 
 % Item d)
 
 f_x = zeros(length(Az));
 f_y = zeros(length(Az));
 
-f_x = (B_x((4/dx)+1, :)).^2 - (B_y((4/dx)+1, :)).^2
-f_y = 2*B_x((4/dx)+1, :).*B_y((4/dx)+1, :)
-
-B_x((4/dx)+1, :)
-B_y((4/dx)+1, :)
-
-%B_x(5/dx, :);
-%f_x;
-%f_y;
-
-a = 1;
-b = 2*M - 1;
 n = length(Az);
-h = dy;
-s_x = f_x(a) + f_x(b);
 
-for i = 1:2:n-1
-    s_x = s_x + 4*f_x(a+i);
-end
-
-for i = 2:2:n-2
-    s_x = s_x + 2*f_x(a+i);
-end
-
-I_x = (1/(2*mi_0))*(h*0.01/3) * s_x
-
-s_y = f_y(a) + f_y(b);
-
-for i = 1:2:n-1
-    s_y = s_y + 4*f_y(a+i);
-end
-
-for i = 2:2:n-2
-    s_y = s_y + 2*f_y(a+i);
-end
-
-I_y = (1/(2*mi_0))*(h*0.01/3) * s_y
-%}
+[F_x, F_y] = itemD(B_x, B_y, dx, M, n, mi_0)  
 
 % Item e1)
 
+% "itens a e b" do e1
 Az = zeros(M, N);
 Az_new = itemE1(Az, dx, dy);
 
@@ -189,3 +111,26 @@ end
 
 title_def = 'e1) Az (Wb/m) - passo ';
 plotA(Az, title_def, M, N, dx)
+
+% "item c" do e1
+B_x = zeros(2*M - 1, N);
+B_y = zeros(2*M - 1, N);
+
+[B_x, B_y, H_x, H_y] = itemC(Az, B_x, B_y, dx, dy, N, mi);
+
+step = 1/dx;
+
+plotC(X, Y, B_x, B_y, H_x, H_y, step)
+
+% "item d" do e1
+
+f_x = zeros(length(Az));
+f_y = zeros(length(Az));
+
+[F_x, F_y] = itemD(B_x, B_y, dx, M, n, mi_0)
+
+% item e2)
+
+% "itens a e b" do e2
+
+
