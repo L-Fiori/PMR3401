@@ -1,8 +1,13 @@
 close all; clear all; clc
 
+% Itens a) e b)
+
+% Tamanho da malha utilizada (metade do dominio original,
+% pois o problema é simétrico)
 x = 22;
 y = 10;
 
+% Especificacao do passo
 dx = 1;
 dy = 1;
 
@@ -13,31 +18,38 @@ Az = zeros(M, N);
 
 Az_new = itemA(Az, dx, dy);
 
-Az = zeros(2*M, N);
+Az = zeros(2*M-1, N);
 
-Az(M+1:2*M, :) = Az_new(:, :);
+Az(M:end, :) = Az_new(:, :);
 
-for j=1:M
+for j=1:M-1
     for i=(2:N-1)
         Az(j, i) = Az_new(M+1-j, i);
     end
 end 
 
-%{
-h = heatmap(Az, 'xlabel', 'x', 'ylabel', 'y', 'Colormap', flipud(hot));
+figure(1)
+
+h = heatmap(Az, 'xlabel', 'x (cm)', 'ylabel', 'y (cm)', 'Colormap', flipud(hot));
 
 h.GridVisible = 'off';
-Ax = gca;
-Ax.XDisplayLabels = nan(size(Ax.XDisplayData));
-Ax.YDisplayLabels = nan(size(Ax.YDisplayData));
-%}
+title(['a) Az (Wb/m) - passo ', num2str(dx)]);
+
+XLabels = linspace(0, 22, N);
+CustomXLabels = string(XLabels);
+CustomXLabels(mod(XLabels, 2) ~= 0) = " ";
+h.XDisplayLabels = CustomXLabels;
+
+YLabels = linspace(10, -10, 2*M-1);
+CustomYLabels = string(YLabels);
+CustomYLabels(mod(YLabels, 2) ~= 0) = " ";
+h.YDisplayLabels = CustomYLabels;
 
 % Item c)
 
+[X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
 
 %Implementacao utilizando curl()
-
-[X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
 
 %{
 X(:,:,2) = ones(2*M, N)+1;
@@ -126,40 +138,49 @@ q = quiver(X(1:step:end, 1:step:end), Y(1:step:end, 1:step:end), curl_x(1:step:e
 q.AutoScaleFactor = 1.4;
 %}
 
-%}
 
 % Item d)
 
 f_x = zeros(length(Az));
 f_y = zeros(length(Az));
 
-f_x = (B_x(5/dx, :)).^2 + (B_y(5/dx, :)).^2;
-f_y = 2*B_x(5/dx, :).*B_y(5/dx, :);
+f_x = (B_x((4/dx)+1, :)).^2 - (B_y((4/dx)+1, :)).^2
+f_y = 2*B_x((4/dx)+1, :).*B_y((4/dx)+1, :)
+
+B_x((4/dx)+1, :)
+B_y((4/dx)+1, :)
+
+%B_x(5/dx, :);
+%f_x;
+%f_y;
 
 a = 1;
 b = 2*M - 1;
 n = length(Az);
 h = dy;
-s = f_x(a) + f_x(b);
+s_x = f_x(a) + f_x(b);
 
 for i = 1:2:n-1
-    s = s + 4*f_x(a+i*h);
+    s_x = s_x + 4*f_x(a+i);
 end
 
 for i = 2:2:n-2
-    s = s + 2*f_x(a+i*h);
+    s_x = s_x + 2*f_x(a+i);
 end
 
-I_x = (h*0.01/3) * s
+I_x = (1/(2*mi_0))*(h*0.01/3) * s_x
 
 s_y = f_y(a) + f_y(b);
 
 for i = 1:2:n-1
-    s_y = s_y + 4*f_y(a+i*h);
+    s_y = s_y + 4*f_y(a+i);
 end
 
 for i = 2:2:n-2
-    s_y = s_y + 2*f_y(a+i*h);
+    s_y = s_y + 2*f_y(a+i);
 end
 
-I_y = (h*0.01/3) * s
+I_y = (1/(2*mi_0))*(h*0.01/3) * s_y
+
+% Item e1)
+
