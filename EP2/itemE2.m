@@ -15,17 +15,11 @@ count = 1;
 
 for k=1:t_range
     
-    % y = 0 -> -10
-    for j=1:(M-1) % Linhas
+    for j=1:(M-1)
 
-        % x = 0 -> 22
-        for i=2:(N-1) % Colunas
 
-            % ---- Contorno Externo ----
-            % Já resolvido Az = 0
+        for i=2:(N-1)
 
-            % ---- Fronteiras Internas ----
-            % Condicao de contorno de x = 4, 0 > y > -10 (Armadura/Ar em y)
             if ((i-1)*dx == 4)
                 mi_1x = mi_ferro_x;
                 mi_1y = mi_ferro_y;
@@ -67,9 +61,9 @@ for k=1:t_range
                 mi_2x = mi_ferro_x;
                 mi_2y = mi_ferro_y;
                 if (j == 1)
-                    Az(j,i,1) = 1/(2*mi_2y*(2/mi_1+1/mi_2y+1/mi_2x)) * ( mi_2y*(1/mi_2x+1/mi_1)*(2*Az(j+1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2y/mi_1)*Az(j,i-1,1) );
+                    Az(j,i,1) = 1/(2*mi_2y*(2/mi_1 + 1/mi_2y + 1/mi_2x)) * (mi_2y*(1/mi_2x + 1/mi_1)*(2*Az(j+1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2y/mi_1)*Az(j,i-1,1));
                 else
-                    Az(j,i,1) = 1/(2*mi_2y*(2/mi_1+1/mi_2y+1/mi_2x)) * ( mi_2y*(1/mi_2x+1/mi_1)*(Az(j+1,i,1)+Az(j-1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2y/mi_1)*Az(j,i-1,1) );
+                    Az(j,i,1) = 1/(2*mi_2y*(2/mi_1 + 1/mi_2y + 1/mi_2x)) * (mi_2y*(1/mi_2x + 1/mi_1)*(Az(j+1,i,1)+Az(j-1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2y/mi_1)*Az(j,i-1,1));
                 end
                 Az(j,i,2) = Az(j,i,1);
 
@@ -79,23 +73,23 @@ for k=1:t_range
                 mi_1y = mi_ferro_y;
                 mi_2 = mi_b;
                 if (j == 1)
-                    Az(j,i,1) = 1/(4+2*mi_2*(1/mi_1y+1/mi_1x)) * ( (mi_2/mi_1x+1)*(2*Az(j+1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2/mi_1y)*Az(j,i-1,1) );
+                    Az(j,i,1) = 1/(4+2*mi_2*(1/mi_1y + 1/mi_1x)) * ((mi_2/mi_1x + 1)*(2*Az(j+1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2/mi_1y)*Az(j,i-1,1) );
                 else
-                    Az(j,i,1) = 1/(4+2*mi_2*(1/mi_1y+1/mi_1x)) * ( (mi_2/mi_1x+1)*(Az(j+1,i,1)+Az(j-1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2/mi_1y)*Az(j,i-1,1) );
+                    Az(j,i,1) = 1/(4+2*mi_2*(1/mi_1y + 1/mi_1x)) * ((mi_2/mi_1x + 1)*(Az(j+1,i,1)+Az(j-1,i,1)) + 2*Az(j,i+1,1) + 2*(mi_2/mi_1y)*Az(j,i-1,1) );
                 end
                 Az(j,i,2) = Az(j,i,1);
 
-            % --- Pontos Internos ---
-            % Região da bobina
+            % Para o caso de ser um ponto interno
+            % Bobina
             elseif ((i-1)*dx < 20 || (j-1)*dx < 6) 
-                % Dentro da bobina esquerda
+                % Dentro da bobina lado esquerdo
                 if ((i-1)*dx > 14 && (i-1)*dx < 16 && (j-1)*dx < 6)
                     if (j == 1)
-                        Az(j,i,2) = dt/(mi_b*sigma*(dx*10^-2)^2) * ( Az(j,i,1)*(-4 + mi_b*sigma*(dx*10^-2)^2/dt) - mi_b*(dx*10^-2)^2*cos(60*t)*(2*10^6*cos(pi*(j-1)*dx*10^-2/0.12)+8*10^5)+Az(j,i+1,1)+Az(j,i-1,1)+2*Az(j+1,i,1) );
+                        Az(j,i,2) = dt/(mi_b*sigma*(dx*10^-2)^2) * (Az(j,i,1)*(-4 + mi_b*sigma*(dx*10^-2)^2/dt) - mi_b*(dx*10^-2)^2*cos(60*t)*(2*10^6*cos(pi*(j-1)*dx*10^-2/0.12)+8*10^5)+Az(j,i+1,1)+Az(j,i-1,1)+2*Az(j+1,i,1) );
                     else
                         Az(j,i,2) = dt/(mi_b*sigma*(dx*10^-2)^2) * (Az(j,i,1)*(-4 + mi_b*sigma*(dx*10^-2)^2/dt) - mi_b*(dx*10^-2)^2*cos(60*t)*(2*10^6*cos(pi*(j-1)*dx*10^-2/0.12)+8*10^5) + Az(j,i+1,1) + Az(j,i-1,1) + Az(j+1,i,1) + Az(j-1,i,1) );
                     end
-                % Dentro da bobina direita
+                % Dentro da bobina lado direito
                 elseif ((i-1)*dx > 20 && (i-1)*dx < 22 && (j-1)*dx < 6)
                     if (j == 1)
                         Az(j,i,2) = dt/(mi_b*sigma*(dx*10^-2)^2) * ( Az(j,i,1)*(-4 + mi_b*sigma*(dx*10^-2)^2/dt) + mi_b*(dx*10^-2)^2*cos(60*t)*...
@@ -106,7 +100,7 @@ for k=1:t_range
                             Az(j,i+1,1)+Az(j,i-1,1)+...
                             Az(j+1,i,1)+Az(j-1,i,1) );
                     end
-                % Dentro da armadura ou do ferro
+                % Armadura/ferro
                 elseif ((i-1)*dx < 4 || ((i-1)*dx > 5 && (j-1)*dx > 6) || ((i-1)*dx > 16 && (i-1)*dx < 20 && (j-1)*dx <= 6) || ((i-1)*dx == 16 && (j-1)*dx == 6) )
                     if (j == 1)
                         Az(j,i,1) = 1/(1/mi_ferro_x+1/mi_ferro_y) * ( (1/mi_ferro_y)*(Az(j,i+1,1)+Az(j,i-1,1)) + (1/mi_ferro_x)*(2*Az(j+1,i,1)) ) / 2;
@@ -114,7 +108,7 @@ for k=1:t_range
                         Az(j,i,1) = 1/(1/mi_ferro_x+1/mi_ferro_y) * ( (1/mi_ferro_y)*(Az(j,i+1,1)+Az(j,i-1,1)) + (1/mi_ferro_x)*(Az(j+1,i,1)+Az(j-1,i,1)) ) / 2;
                     end
                     Az(j,i,2) = Az(j,i,1);
-                % Demais pontos
+                % Resto
                 else
                     if (j == 1)
                         Az(j,i,1) = ( Az(j,i+1,1) + Az(j,i-1,1) + 2*Az(j+1,i,1) )/4;

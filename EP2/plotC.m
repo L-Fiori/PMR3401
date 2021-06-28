@@ -1,4 +1,4 @@
-function plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H)
+function plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H, dx, M, N)
 
 figure
 q = quiver(X(1:step:end, 1:step:end), Y(1:step:end, 1:step:end), B_x(1:step:end, 1:step:end), B_y(1:step:end, 1:step:end));

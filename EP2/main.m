@@ -3,7 +3,7 @@ close all; clear all; clc
 % Itens a) e b)
 
 % Tamanho da malha utilizada (metade do dominio original,
-% pois o problema é simétrico)
+% pois o problema nao eh simetrico)
 x = 22;
 y = 10;
 
@@ -36,6 +36,9 @@ plotA(Az, title_def, M, N, dx, isE2)
 % Item c)
 
 [X, Y, Z] = meshgrid(1:N, 1:2*M-1, 1);
+x = 1:N;
+y = 1:(2*M-1);
+
 
 % Montagem da matriz de mis
 
@@ -51,7 +54,7 @@ mi_ferro_y = 2500*mi_0;
 
 for j=2:2*M-2
     for i=2:(N-1)
-        if ((i-1)*dx =< 4)
+        if ((i-1)*dx <= 4)
             mi(j, i) = 1/mi_ferro;
         elseif((i-1)*dx > 4 && (i-1)*dx < 5)
             mi(j, i) = 1/mi_ar;
@@ -80,25 +83,26 @@ end
 B_x = zeros(2*M - 1, N);
 B_y = zeros(2*M - 1, N);
 
-[B_x, B_y, H_x, H_y] = itemC(Az, B_x, B_y, dx, dy, N, mi, mi, isE);
+[B_x, B_y, H_x, H_y] = itemC(Az, B_x, B_y, dx, dy, N, mi, mi, isE)
 
 step = 1/dx;
 
 titledef_B = 'Campo vetorial B (T) - passo ';
 titledef_H = 'Campo vetorial H (A/m^2) - passo ';
 
-plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H)
+plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H, dx, M, N)
 
 % Item d)
 
-f_x = zeros(length(Az));
-f_y = zeros(length(Az));
+f_x = zeros(2*M-1);
+f_y = zeros(2*M-1);
 
-n = length(Az);
+n = 2*M-1;
 
-[F_x, F_y] = itemD(B_x, B_y, dx, M, n, mi_0)  
+[F_x, F_y] = itemD(B_x, B_y, dx, M, n, mi_0)
 
 % Item e1)
+isE2 = false;
 isE = true;
 
 % "itens a e b" do e1
@@ -127,7 +131,7 @@ mi_y = mi;
 
 for j=2:2*M-2
     for i=2:(N-1)
-        if ((i-1)*dx =< 4)
+        if ((i-1)*dx <= 4)
             mi_x(j, i) = 1/mi_ferro_x;
         elseif((i-1)*dx > 4 && (i-1)*dx < 5)
             mi_x(j, i) = 1/mi_ar;
@@ -153,27 +157,28 @@ for j=2:2*M-2
     end
 end
 
-
 [B_x, B_y, H_x, H_y] = itemC(Az, B_x, B_y, dx, dy, N, mi_x, mi_y, isE);
 
 step = 1/dx;
 
-plotC(X, Y, B_x, B_y, H_x, H_y, step)
+plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H, dx, M, N)
 
 % "item d" do e1
 
 f_x = zeros(length(Az));
 f_y = zeros(length(Az));
+n = 2*M - 1;
 
 [F_x, F_y] = itemD(B_x, B_y, dx, M, n, mi_0)
 
 % item e2)
+isE2 = true;
 
 % "itens a e b" do e2
 
 dt = 0.000001; % passo = 0.1
-t_range = 50000000; % Intervalo temporal para plotagem da força (*deltat) [500]
-divs = 5000000; % Divisões do intervalo acima [10]
+t_range = 500; % Intervalo temporal para plotagem da força (*deltat) [500]
+divs = 10; % Divisões do intervalo acima [10]
 tamanho = t_range/divs;
 
 Az = zeros(M, N, 2); % 50 ~~~~~~
@@ -193,8 +198,6 @@ for j=1:M-1
     end
 end 
 
-% Distribuição de Az(x,y) --------------------------
-
 titledef = 'e2) Az (Wb/m) - passo ';
 isE2 = true;
 num = 10;
@@ -210,26 +213,27 @@ plotA(Az(:, :, 3), titledef, M, N, dx, isE2, dt, num)
 B_x = zeros(2*M - 1, N);
 B_y = zeros(2*M - 1, N);
 
+isE = true;
 [B_x, B_y, H_x, H_y] = itemC(Az(:, :, 1), B_x, B_y, dx, dy, N, mi_x, mi_y, isE);
 
 titledef_B = 'Campo vetorial B (T) - passo ';
 titledef_H = 'Campo vetorial H (A/m^2) - passo ';
 step = 1/dx-4;
-plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H)
+plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H, dx, M, N)
 
 B_x = zeros(2*M - 1, N);
 B_y = zeros(2*M - 1, N);
 
 [B_x, B_y, H_x, H_y] = itemC(Az(:, :, 2), B_x, B_y, dx, dy, N, mi_x, mi_y, isE);
 
-plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H)
+plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H, dx, M, N)
 
 B_x = zeros(2*M - 1, N);
 B_y = zeros(2*M - 1, N);
 
 [B_x, B_y, H_x, H_y] = itemC(Az(:, :, 3), B_x, B_y, dx, dy, N, mi_x, mi_y, isE);
 
-plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H)
+plotC(X, Y, B_x, B_y, H_x, H_y, step, titledef_B, titledef_H, dx, M, N)
 
 % "item d" do item e2
 
@@ -256,14 +260,14 @@ F_x = zeros(n, 50);
 F_y = zeros(n, 50);
 
 for k=1:tamanho
-    [F_x(k), F_y(k)] = itemD(B_x(k), B_y(k), dx, M, n, mi_0)  
+    [F_x(k), F_y(k)] = itemD(B_x(k), B_y(k), dx, M, n, mi_0); 
 end
 
 t = linspace(divs*dt, t_range*dt, tamanho);
 
 figure
 plot(t, F_x);
-title(['Força horizontal aplicada na armadura, passo=', num2str(dx),'cm, \Deltat=', num2str(dt),'s']);
-xlabel('Tempo (segundos)');
-ylabel('Fx (Newtons)');
+title(['Forca horizontal aplicada na armadura, passo=', num2str(dx),'cm, \Deltat=', num2str(dt),'s']);
+xlabel('Tempo (s)');
+ylabel('Fx (N)');
 grid on;

@@ -1,14 +1,14 @@
 function plotA(Az, title_def, M, N, dx, isE2, dt, num)
 
 	if ~exist('dt', 'var')
-		dt = 0
+		dt = 0;
 	end
 
 	if ~exist('num', 'var')
-		num = 0
+		num = 0;
 	end
 	
-	if isE2
+	if isE2 == false
 		figure
 
 		h = heatmap(Az, 'xlabel', 'x (cm)', 'ylabel', 'y (cm)', 'Colormap', flipud(hot));
@@ -43,5 +43,6 @@ function plotA(Az, title_def, M, N, dx, isE2, dt, num)
 		CustomYLabels = string(YLabels);
 		CustomYLabels(mod(YLabels, 2) ~= 0) = " ";
 		h.YDisplayLabels = CustomYLabels;
-
+    end
+        
 end

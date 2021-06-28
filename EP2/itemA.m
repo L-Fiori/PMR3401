@@ -60,14 +60,6 @@ while iter
                 mi_2 = mi_ferro;
                 mi_1 = mi_ar;
                 
-                %{
-                if((j-1)*dy == 6)
-                    Az(j, i) = (1/(4*((mi_ferro/mi_ar) + 1)))*((mi_ferro/mi_ar)*(Az(j-1, i) + Az(j, i-1)) + Az(j+1, i) + Az(j, i+1));
-                else 
-                    Az(j, i) = (1/(4*((mi_ferro/mi_ar) + 1)))*(((mi_ferro/mi_ar) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_ferro/mi_ar)*Az(j, i-1)));
-                end
-                %}
-                
             elseif(((i-1)*dx > 5 && (i-1)*dx < 14) && (j-1)*dy == 6)
                 % Fronteira horizontal ar-ferro
                 front_h = true;
@@ -111,7 +103,7 @@ while iter
                 if(j == 1)
                     Az(j, i) = (1/(4*((mi_2/mi_1) + 1)))*(((mi_2/mi_1) + 1)*2*Az(j+1, i) + 2*(Az(j, i+1) + (mi_2/mi_1)*Az(j, i-1)));
                 else
-                    Az(j, i) = (1/(4*((mi_2/mi_1) + 1)))*(((mi_2/mi_1) + 1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_2/mi_1)*Az(j, i-1)));
+                    Az(j, i) = (1/(4*(mi_2/mi_1+1)))*((mi_2/mi_1+1)*(Az(j+1, i) + Az(j-1, i)) + 2*(Az(j, i+1) + (mi_2/mi_1)*Az(j, i-1)));
                 end
             end
 
