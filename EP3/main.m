@@ -1,3 +1,5 @@
+clear; clc; close all;
+
 b1 = 1.8; h1 = 0.9;
 A1 = b1*h1;
 b2 = 0.9; h2 = 0.9;
@@ -17,7 +19,35 @@ if (dx == 1)
           
     coords(72, :) = [];
     
-else
+    con = [ 6 89;
+        19 89;
+        66 89;
+        (1:(Nod_vh - 1))' (2:(Nod_vh))';
+        (67:70)' (68:71)';
+        71 37;
+        37 72;
+        (72:88)' (73:89)'];
+    
+elseif (dx == 2)
+	Nod_vh = size(0:dx:65, 2) + 1;
+	Nod_p = size(0:dx:23, 2) + 1;
+    
+	coords = [ 5  5;
+              (0:dx:65)' 5*ones(Nod_vh-1, 1);
+              65  5;
+              36*ones(Nod_p-1, 1) (0:dx:23)';
+              36 23];
+          
+	con = [ 6 89;
+            19 89;
+            66 89;
+            (1:(Nod_vh - 1))' (2:(Nod_vh))';
+            (67:70)' (68:71)';
+            71 37;
+            37 72;
+            (72:88)' (73:89)'];
+
+elseif (dx == 3)
 	Nod_vh = size(0:dx:65, 2) + 1;
 	Nod_p = size(0:dx:23, 2) + 1;
     
@@ -29,9 +59,7 @@ else
               65 5
               36*ones(Nod_p-1, 1) (0:dx:23)'
               36 23];
-
-end
-
+          
 	con = [ 6 89;
             19 89;
             66 89;
@@ -40,6 +68,8 @@ end
             71 37;
             37 72;
             (72:88)' (73:89)'];
+
+end
         
 %plot_struct(coords, con, '-b');
 
@@ -275,13 +305,21 @@ Mgm(:, (Nod_vh + 1)*3) = []; Mgm((Nod_vh + 1)*3, :) = [];
 Mgm(:, (Nod_vh)*3 - 2) = []; Mgm((Nod_vh)*3 - 2, :) = [];
 Mgm(:, (Nod_vh)*3 - 1) = []; Mgm((Nod_vh)*3 - 1, :) = [];
 
-xlswrite('Kgm_zeros.xlsx', Kgm)
-size(Kgm)
+i_cc = [(Nod_vh)*3 - 2, (Nod_vh)*3 - 1, (Nod_vh + 1)*3 - 2, (Nod_vh + 1)*3 - 1, (Nod_vh + 1)*3];
+
+indices = []; % indices das colunas nulas - a serem removidas
+
+for i=1:size(Kgm, 1)
+    if Kgm(i, :) == zeros(1, size(Kgm, 2))
+        indices(end+1) = i;
+    end
+end
+
+xlswrite('Kgm_zeros.xlsx', Mgm)
 
 Kgm(~any(Kgm, 2), :) = []; %rows
 Kgm(:, ~any(Kgm, 1)) = []; %columns
 
-size(Kgm)
 xlswrite('Kgm.xlsx', Kgm)
 
 xlswrite('Mgm_zeros.xlsx', Mgm)
@@ -291,18 +329,37 @@ Mgm(:, ~any(Mgm, 1)) = []; %columns
 
 xlswrite('Mgm.xlsx', Mgm)
 
-det(Mgm)
-det(Kgm)
-
 [A, V] = eigs(Mgm\Kgm, 7, 'smallestabs');
 
-omega_1 = sqrt(abs(V)/(2*pi))
+omega_1 = sqrt(diag(V)/(2*pi))
 
-%{
-% Reescalando os autovetores tal que X'*SM*X=I
+mod = 3
+U = A(:, mod);
 
-for i = 1:2*Nx
-	valuei = D(:, i)' * SM * D(:, i);
-	D(:, i) = D(:, i)/sqrt(valuei);
+U = U';
+U = [0 U(1:end)];
+for i=2:size(indices, 2)
+    U = [U(1:indices(i)-1) 0 U(indices(i):end)];
 end
-%}
+
+for i=1:5
+    U = [U(1:i_cc(i)-1) 0 U(i_cc(i):end)];    
+end
+
+U = U';
+
+freq = omega_1(mod);
+T = 1/freq;
+dt = T/15;
+TF = 5*T;
+t = 0:dt:TF;
+scale = 10;
+
+for i=1:length(t)
+    coorExag = coords + scale*[ U(1:3:end) U(2:3:end) ]*sin(2*pi*freq*t(i));
+    plot_struct(coorExag, con, '-r');
+    axis([-1 66 -1 24])
+    pause(0.1);
+    clf;
+end
+
