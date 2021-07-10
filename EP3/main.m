@@ -1,9 +1,9 @@
 clear; clc; close all;
 
 b1 = 1.8; h1 = 0.9;
-A1 = b1*h1;
+area1 = b1*h1;
 b2 = 0.9; h2 = 0.9;
-A2 = b2*h2;
+area2 = b2*h2;
 D3 = 0.050;
 
 dx = 1;
@@ -32,42 +32,33 @@ elseif (dx == 2)
 	Nod_vh = size(0:dx:65, 2) + 1;
 	Nod_p = size(0:dx:23, 2) + 1;
     
-	coords = [ 5  5;
-              (0:dx:65)' 5*ones(Nod_vh-1, 1);
+	coords = [(0:dx:65)' 5*ones(Nod_vh-1, 1);
               65  5;
               36*ones(Nod_p-1, 1) (0:dx:23)';
-              36 23];
+              36 23
+              5 5];
           
-	con = [ 6 89;
-            19 89;
-            66 89;
-            (1:(Nod_vh - 1))' (2:(Nod_vh))';
-            (67:70)' (68:71)';
-            71 37;
-            37 72;
-            (72:88)' (73:89)'];
+	con = [ 48  47;
+            10  47;
+            34  47;
+            (1:33)' (2:34)';
+            (35:46)' (36:47)'];
 
 elseif (dx == 3)
 	Nod_vh = size(0:dx:65, 2) + 1;
 	Nod_p = size(0:dx:23, 2) + 1;
     
-	coords = [ 5  5;
-       		  18  5;
+	coords = [(0:dx:65)' 5*ones(Nod_vh-1, 1);
               65  5;
-              36 23;
-              (0:dx:65)' 5*ones(Nod_vh-1, 1);
-              65 5
-              36*ones(Nod_p-1, 1) (0:dx:23)'
-              36 23];
+              36*ones(Nod_p-1, 1) (0:dx:23)';
+              36 23
+              5 5];
           
-	con = [ 6 89;
-            19 89;
-            66 89;
-            (1:(Nod_vh - 1))' (2:(Nod_vh))';
-            (67:70)' (68:71)';
-            71 37;
-            37 72;
-            (72:88)' (73:89)'];
+	con = [ 33  32;
+            7  32;
+            23  32;
+            (1:22)' (2:23)';
+            (24:31)' (25:32)'];
 
 end
         
@@ -88,8 +79,8 @@ data.A = ones(Nel, 1); % Vetor de areas dos elementos.
 data.I = ones(Nel, 1); % Vetor de momentos de inercia dos elementos.
 
 data.A(1:3) = pi*(D3/2)^2;
-data.A(4:(4 + Nel_vh - 1)) = A2;
-data.A((4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)) = A1;
+data.A(4:(4 + Nel_vh - 1)) = area2;
+data.A((4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)) = area1;
 
 data.I(4:(4 + Nel_vh - 1)) = b2*((h2)^3)/12;
 data.I((4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)) = b1*((h1)^3)/12;
@@ -329,37 +320,142 @@ Mgm(:, ~any(Mgm, 1)) = []; %columns
 
 xlswrite('Mgm.xlsx', Mgm)
 
-[A, V] = eigs(Mgm\Kgm, 7, 'smallestabs');
+a0 = 0.1217;
+a1 = 0.0087;
 
-omega_1 = sqrt(diag(V)/(2*pi))
+Kg2 = Kg;
+Mg2 = Mg; % Retirando o terceiro grau de liberdade das matrizes pois nao serao utilizadas.
 
-mod = 3
-U = A(:, mod);
+Kg2(3:3:end, :) = []; Kg2(:, 3:3:end) = [];
+Mg2(3:3:end, :) = []; Mg2(:, 3:3:end) = [];
 
-U = U';
-U = [0 U(1:end)];
-for i=2:size(indices, 2)
-    U = [U(1:indices(i)-1) 0 U(indices(i):end)];
+for i=1:size(Kg2, 1)
+   
+    if Kg2(i, :) == zeros(1, size(Kg2, 1))
+        Kg2(i, i) = 1;
+        Mg2(i, i) = 1;
+    end
+    
 end
 
-for i=1:5
-    U = [U(1:i_cc(i)-1) 0 U(i_cc(i):end)];    
-end
+Cgm = a0*Mg2 + a1*Kg2;
 
-U = U';
+va = 1;
 
-freq = omega_1(mod);
-T = 1/freq;
-dt = T/15;
-TF = 5*T;
+TF = 55/va;
+
+dt = 0.1;
 t = 0:dt:TF;
-scale = 10;
+
+U1 = zeros(size(Mg2, 1), 1);
+V1 = zeros(size(Mg2, 1), 1);
+A1 = zeros(size(Mg2, 1), 1);
+
+V = zeros(26, 1);
+Fnod = zeros(size(Mg2, 1), 1);
+
+beta = 0.25;
+gamma = 0.5;
+
+Meq = Mg2 + dt*gamma*Cgm + dt*dt*beta*Kg2;
+
+UA = zeros(length(t), 1);
+UB = zeros(length(t), 1);
+UC = zeros(length(t), 1);
+UF = zeros(length(t), 1);
 
 for i=1:length(t)
-    coorExag = coords + scale*[ U(1:3:end) U(2:3:end) ]*sin(2*pi*freq*t(i));
-    plot_struct(coorExag, con, '-r');
-    axis([-1 66 -1 24])
-    pause(0.1);
-    clf;
+    
+    if (t(i) <= 27/va)
+        N1 = 20;
+    elseif 27/va < t(i) <= 47/va
+        N1 = va*t(i) - 7;
+    else
+        N1 = 40;
+    end
+    
+    if (t(i) <= 20/va)
+        N2 = 20 - va*t(i);
+    else
+        N2 = 0;
+    end
+    
+    for j=1:size(V, 1)
+    
+        if ( t(i) <= (36 - (5 + j))/va )
+            V(j, 1) = 0;
+        elseif ( (36 - (5 + j))/va < t(i) <= (36 + 20 -(5 + j))/va )
+            V(j, 1) = 80*9.8*(1 - cos(2*pi*va*t(i)))/2;
+        else
+            V(j, 1) = 0;
+        end
+        
+    end
+  
+    q1 = 80*9.8*N1/9;
+    q2 = 80*9.8*N2/9;
+    
+    Fnod(2:2:20) = -q1;
+    Fnod(22:2:72) = V;
+    Fnod(74:2:92) = -q2;
+    
+    F2 = Fnod;
+    
+    Feq = F2 - Cgm*( V1 + dt*(1-gamma)*A1 ) - Kg2*( U1 + dt*V1 + dt*dt*0.5*(1 - 2*beta)*A1 );
+    A2 = Meq\Feq;
+    U2 = U1 + dt*V1 + dt*dt*0.5*( (1-2*beta)*A1 + 2*beta*A2 );
+    V2 = V1 + dt*( (1-gamma)*A1 + gamma*A2 );
+    
+    UA(i, 1) = U2(2, 1);
+    UB(i, 1) = U2(12, 1);
+    UC(i, 1) = U2(20, 1);
+    UF(i, 1) = U2(177, 1);
+   
+    U1 = U2; V1 = V2; A1 = A2;
 end
 
+%plot(t, UA)
+%plot(t, UB)
+%plot(t, UC)
+plot(t, UF)
+
+%{
+[A, V] = eigs(Mgm\Kgm, 7, 'smallestabs');
+
+omega_1 = sqrt(diag(V))/(2*pi)
+
+if (dx == 1)
+
+    mod = 3
+    U = A(:, mod);
+
+    U = U';
+    U = [0 U(1:end)];
+    for i=2:size(indices, 2)
+        U = [U(1:indices(i)-1) 0 U(indices(i):end)];
+    end
+
+    for i=1:5
+        U = [U(1:i_cc(i)-1) 0 U(i_cc(i):end)];    
+    end
+
+    U = U';
+
+    freq = omega_1(mod);
+    T = 1/freq;
+    dt = T/15;
+    TF = 5*T;
+    t = 0:dt:TF;
+    scale = 10;
+
+    for i=1:length(t)
+        coorExag = coords + scale*[ U(1:3:end) U(2:3:end) ]*sin(2*pi*freq*t(i));
+        plot_struct(coorExag, con, '-r');
+        axis([-1 66 -1 24])
+        pause(0.1);
+        clf;
+    end
+    
+end
+
+%}
