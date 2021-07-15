@@ -93,8 +93,8 @@ for e=1:Nel
 	x1 = coords(con(e, 1), 1);
 	x2 = coords(con(e, 2), 1);
 
-	y1 = coords(con(e, 1),2);
-	y2 = coords(con(e, 2),2);
+	y1 = coords(con(e, 1), 2);
+	y2 = coords(con(e, 2), 2);
 
 	data.L(e) = sqrt( (x2 - x1)^2 + (y2 - y1)^2 );
 	data.Q(e) = atan2((y2 - y1), (x2 - x1))*(180/pi);
@@ -121,7 +121,8 @@ m0_t = [2 0 0 1 0 0;
         1 0 0 2 0 0;
         0 0 0 0 0 0;
         0 0 0 0 0 0];
-
+    
+%{
 for e=1:3
 
 	% Passo 3 - Construir a matriz de cada elemento.
@@ -192,9 +193,11 @@ for e=4:(4 + Nel_vh - 1)
 end
 
 % Construcao das matrizes para os elementos de portico (viga vertical).
-    
-for e=(4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)
+%}
+        
+%for e=(4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)
 
+for e=1:(4 + Nel_vh + Nel_p - 1)
 	ke_t = (data.E(e)*data.A(e)/data.L(e))*k0_t;
 	me_t = (data.rho(e)*data.A(e)*data.L(e)/6)*m0_t;
 
@@ -212,7 +215,7 @@ for e=(4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)
 		     0  54             13*data.L(e)     0 156           -22*data.L(e);
 	         0 -13*data.L(e)  -3*(data.L(e))^2  0 -22*data.L(e)  4*(data.L(e))^2];
 
-	ke_v = data.E(e)*data.I(e)/(data.L(e)^3)*k0_v;
+	ke_v = (data.E(e)*data.I(e)/(data.L(e)^3))*k0_v;
 	me_v = (data.rho(e)*data.A(e)*data.L(e)/420)*m0_v;
 
 	ke = ke_t + ke_v;
@@ -323,20 +326,30 @@ xlswrite('Mgm.xlsx', Mgm)
 a0 = 0.1217;
 a1 = 0.0087;
 
-Kg2 = Kg;
-Mg2 = Mg; % Retirando o terceiro grau de liberdade das matrizes pois nao serao utilizadas.
+Kg2 = Kgm;
+Mg2 = Mgm; % Retirando o terceiro grau de liberdade das matrizes pois nao serao utilizadas.
 
-Kg2(3:3:end, :) = []; Kg2(:, 3:3:end) = [];
-Mg2(3:3:end, :) = []; Mg2(:, 3:3:end) = [];
+%Kg2(3:3:end, :) = []; Kg2(:, 3:3:end) = [];
+%Mg2(3:3:end, :) = []; Mg2(:, 3:3:end) = [];
+%Mg2(131:134, :) = []; Mg2(:, 131:134) = [];
+%Kg2(131:134, :) = []; Kg2(:, 131:134) = [];
 
+%{
+Kg2(~any(Kg2, 2), :) = []; %rows
+Kg2(:, ~any(Kg2, 1)) = []; %columns
+
+Mg2(~any(Mg2, 2), :) = []; %rows
+Mg2(:, ~any(Mg2, 1)) = []; %columns
+%}
+
+%{
 for i=1:size(Kg2, 1)
-   
     if Kg2(i, :) == zeros(1, size(Kg2, 1))
         Kg2(i, i) = 1;
         Mg2(i, i) = 1;
     end
-    
 end
+%}
 
 Cgm = a0*Mg2 + a1*Kg2;
 
@@ -344,7 +357,7 @@ va = 1;
 
 TF = 55/va;
 
-dt = 0.1;
+dt = 0.05;
 t = 0:dt:TF;
 
 U1 = zeros(size(Mg2, 1), 1);
@@ -370,54 +383,80 @@ for i=1:length(t)
         N1 = 20;
     elseif 27/va < t(i) <= 47/va
         N1 = va*t(i) - 7;
-    else
+    elseif (t(i) > 47/va)
         N1 = 40;
     end
     
     if (t(i) <= 20/va)
         N2 = 20 - va*t(i);
-    else
+    elseif (t(i) > 20/va)
         N2 = 0;
     end
     
     for j=1:size(V, 1)
     
-        if ( t(i) <= (36 - (5 + j))/va )
+        if ( t(i) <= (36 - (9 + j))/va )
             V(j, 1) = 0;
-        elseif ( (36 - (5 + j))/va < t(i) <= (36 + 20 -(5 + j))/va )
-            V(j, 1) = 80*9.8*(1 - cos(2*pi*va*t(i)))/2;
-        else
+        elseif ( (36 - (9 + j))/va < t(i) <= (36 + 20 -(9 + j))/va )
+            V(j, 1) = -80*9.8*(1 - cos(2*pi*va*t(i)))/2;
+        elseif (t(i) > (36 + 20 -(9 + j))/va)
             V(j, 1) = 0;
         end
         
     end
   
-    q1 = 80*9.8*N1/9;
-    q2 = 80*9.8*N2/9;
+    q1 = N1*80*9.8/9;
+    q2 = N2*80*9.8/9;
     
+    %{
     Fnod(2:2:20) = -q1;
     Fnod(22:2:72) = V;
     Fnod(74:2:92) = -q2;
+    %}
+    
+    Fnod(2:3:29) = -q1;
+    Fnod(32:3:107) = V;
+    Fnod(110:3:137) = -q2;
     
     F2 = Fnod;
+    
+    if (i == 1)
+        U1 = Kg2\Fnod
+    end
+    
     
     Feq = F2 - Cgm*( V1 + dt*(1-gamma)*A1 ) - Kg2*( U1 + dt*V1 + dt*dt*0.5*(1 - 2*beta)*A1 );
     A2 = Meq\Feq;
     U2 = U1 + dt*V1 + dt*dt*0.5*( (1-2*beta)*A1 + 2*beta*A2 );
     V2 = V1 + dt*( (1-gamma)*A1 + gamma*A2 );
     
+    
     UA(i, 1) = U2(2, 1);
-    UB(i, 1) = U2(12, 1);
-    UC(i, 1) = U2(20, 1);
-    UF(i, 1) = U2(177, 1);
+    UB(i, 1) = U2(17, 1);
+    UC(i, 1) = U2(29, 1);
+    UF(i, 1) = U2(260, 1);
+    
+    %{
+    UA(i, 1) = U2(1, 1);
+    UB(i, 1) = U2(7, 1);
+    UC(i, 1) = U2(11, 1);
+    UF(i, 1) = U2(111, 1);
+    %}
    
     U1 = U2; V1 = V2; A1 = A2;
+    
 end
 
-%plot(t, UA)
+
+plot(t, UA)
+%hold on
 %plot(t, UB)
+%hold on
 %plot(t, UC)
-plot(t, UF)
+%hold on
+%plot(t, UF)
+
+
 
 %{
 [A, V] = eigs(Mgm\Kgm, 7, 'smallestabs');
