@@ -6,7 +6,7 @@ b2 = 0.9; h2 = 0.9;
 area2 = b2*h2;
 D3 = 0.050;
 
-dx = 3;
+dx = 1;
 
 % Passo 1 - Definir a geometria (coordenadas e conectividades).
 
@@ -518,8 +518,9 @@ for i=1:length(t)
     
 end
 
+
+%plot(t, UA)
 %{
-plot(t, UA)
 hold on
 plot(t, UB)
 hold on
@@ -528,3 +529,37 @@ hold on
 plot(t, UF)
 %}
 
+% =============== Analise Harmonica ===================
+
+df = 0.005;
+freq = 0:df:14;
+omega = 2*pi*freq;
+
+F0 = zeros(size(Mg2, 1), 1);
+F0(32:3:107) = -784;
+
+YA = zeros(length(freq), 1);
+YB = zeros(length(freq), 1);
+YC = zeros(length(freq), 1);
+YF = zeros(length(freq), 1);
+
+for i=1:length(freq)
+    Keq = (-omega(i)^2)*Mg2 + Kg2;
+    
+    Y = Keq\F0;
+    
+    YA(i, 1) = abs(Y(2, 1));
+    YB(i, 1) = abs(Y(17, 1));
+    YC(i, 1) = abs(Y(29, 1));
+    YF(i, 1) = abs(Y(260, 1));
+    
+end
+
+
+plot(freq, YA)
+hold on
+plot(freq, YB)
+hold on
+plot(freq, YC)
+hold on
+plot(freq, YF)
