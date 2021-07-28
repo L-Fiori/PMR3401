@@ -407,15 +407,12 @@ title('Análise transiente para os pontos A, B, C e F, com passo dt = 0,01s')
 
 figure;
 plot(t1, UA_dt1)
-%hold on
-figure;
+hold on
 plot(t2, UA)
-%hold on
-figure;
+hold on
 plot(t3, UA_dt3)
 legend('dt = 0.1s', 'dt = 0.01s', 'dt = 0.005s')
 title('Análise transiente para o ponto A com diferentes passos')
-
 
 % =================== Analise Harmonica ===================
 
