@@ -78,7 +78,6 @@ end
         
 %plot_struct(coords, con, '-b');
 
-
 % Passo 2 - Atribuir propriedades aos elementos.
 
 Nod = size(coords, 1);
@@ -120,7 +119,7 @@ end
 Kg = zeros(Ngdl, Ngdl);
 Mg = zeros(Ngdl, Ngdl);
 
-% Construcao das matrizes para os elementos de trelica
+% Construcao das matrizes para os elementos de trelica (cabos)
 
 k0_t = [ 1 0 0 -1 0 0;
          0 0 0  0 0 0;
@@ -170,48 +169,11 @@ for e=1:3
 
 end
 
-% Construcao das matrizes para os elementos de viga horizontal.
-%{
-for e=4:(4 + Nel_vh - 1)
-
-	k0_v = [0  0           0               0  0            0;
-		    0  12          6*data.L(e)     0 -12           6*data.L(e);
-	        0  6*data.L(e) 4*(data.L(e))^2 0 -6*data.L(e)  2*(data.L(e))^2;
-	        0  0           0               0  0            0;       
-		    0 -12         -6*data.L(e)     0  12          -6*data.L(e);
-	        0  6*data.L(e) 2*(data.L(e))^2 0 -6*data.L(e)  4*(data.L(e))^2];
-
-	m0_v = [ 0  0              0                0 0              0;
-		     0  156            22*data.L(e)     0 54            -13*data.L(e);
-	         0  22*data.L(e)   4*(data.L(e))^2  0 13*data.L(e)  -3*(data.L(e))^2;
-	         0  0              0                0 0              0;       
-		     0  54             13*data.L(e)     0 156           -22*data.L(e);
-	         0 -13*data.L(e)  -3*(data.L(e))^2  0 -22*data.L(e)  4*(data.L(e))^2];
-
-	ke = data.E(e)*data.I(e)/(data.L(e)^3)*k0_v;
-	me = (data.rho(e)*data.A(e)*data.L(e)/420)*m0_v;
-
-	nod1 = con(e, 1);
-	nod2 = con(e, 2);
-
-	Kg(3*nod1-2:3*nod1, 3*nod1-2:3*nod1) = Kg(3*nod1-2:3*nod1, 3*nod1-2:3*nod1) + ke(1:3, 1:3); 
-	Kg(3*nod1-2:3*nod1, 3*nod2-2:3*nod2) = Kg(3*nod1-2:3*nod1, 3*nod2-2:3*nod2) + ke(1:3, 4:6); 
-	Kg(3*nod2-2:3*nod2, 3*nod1-2:3*nod1) = Kg(3*nod2-2:3*nod2, 3*nod1-2:3*nod1) + ke(4:6, 1:3); 
-	Kg(3*nod2-2:3*nod2, 3*nod2-2:3*nod2) = Kg(3*nod2-2:3*nod2, 3*nod2-2:3*nod2) + ke(4:6, 4:6); 
-	
-	Mg(3*nod1-2:3*nod1, 3*nod1-2:3*nod1) = Mg(3*nod1-2:3*nod1, 3*nod1-2:3*nod1) + me(1:3, 1:3); 
-	Mg(3*nod1-2:3*nod1, 3*nod2-2:3*nod2) = Mg(3*nod1-2:3*nod1, 3*nod2-2:3*nod2) + me(1:3, 4:6); 
-	Mg(3*nod2-2:3*nod2, 3*nod1-2:3*nod1) = Mg(3*nod2-2:3*nod2, 3*nod1-2:3*nod1) + me(4:6, 1:3); 
-	Mg(3*nod2-2:3*nod2, 3*nod2-2:3*nod2) = Mg(3*nod2-2:3*nod2, 3*nod2-2:3*nod2) + me(4:6, 4:6); 
-
-end
-%}
-% Construcao das matrizes para os elementos de portico (viga vertical).
-
-        
-%for e=(4 + Nel_vh):(4 + Nel_vh + Nel_p - 1)
+% Construcao das matrizes para os elementos de portico (plataforma e torre).
 
 for e=4:(4 + Nel_vh + Nel_p - 1)
+    
+    % Passo 3 - Construir a matriz de cada elemento.
 	ke_t = (data.E(e)*data.A(e)/data.L(e))*k0_t;
 	me_t = (data.rho(e)*data.A(e)*data.L(e)/6)*m0_t;
 
@@ -235,6 +197,7 @@ for e=4:(4 + Nel_vh + Nel_p - 1)
 	ke = ke_t + ke_v;
 	me = me_t + me_v;
 
+    % Passo 4 - Rotacionar cada elemento para o sistema global.
 	c = cosd(data.Q(e)); s = sind(data.Q(e));
 	T = [ c s 0  0 0 0;
 	     -s c 0  0 0 0;
@@ -245,7 +208,8 @@ for e=4:(4 + Nel_vh + Nel_p - 1)
 
 	ke = T'*ke*T;
 	me = T'*me*T;
-
+    
+    % Passo 5 - Alocar a informacao de cada matriz de elemento na matriz global.
 	nod1 = con(e, 1);
 	nod2 = con(e, 2);
     
@@ -258,19 +222,6 @@ for e=4:(4 + Nel_vh + Nel_p - 1)
 	Mg(3*nod1-2:3*nod1, 3*nod2-2:3*nod2) = Mg(3*nod1-2:3*nod1, 3*nod2-2:3*nod2) + me(1:3, 4:6); 
 	Mg(3*nod2-2:3*nod2, 3*nod1-2:3*nod1) = Mg(3*nod2-2:3*nod2, 3*nod1-2:3*nod1) + me(4:6, 1:3); 
 	Mg(3*nod2-2:3*nod2, 3*nod2-2:3*nod2) = Mg(3*nod2-2:3*nod2, 3*nod2-2:3*nod2) + me(4:6, 4:6); 
-    
-    %{
-	Kg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) = Kg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) + ke(1:3, 1:3); 
-	Kg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) = Kg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) + ke(1:3, 4:6); 
-	Kg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) = Kg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) + ke(4:6, 1:3); 
-	Kg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) = Kg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) + ke(4:6, 4:6); 
-	
-	Mg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) = Mg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) + me(1:3, 1:3); 
-	Mg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) = Mg((2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) + me(1:3, 4:6); 
-	Mg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) = Mg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod1-v_ln) - 2):(2*v_ln + 3*(nod1-v_ln))) + me(4:6, 1:3); 
-	Mg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) = Mg((2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln)), (2*v_ln + 3*(nod2-v_ln) - 2):(2*v_ln + 3*(nod2-v_ln))) + me(4:6, 4:6); 
-    %}
-    
 end
 
 % Passo 6 - Aplicar as condicoes de contorno para as fixacoes (na matriz de rigidez global).
@@ -280,94 +231,28 @@ Mgm = Mg; % Matriz de massa modificada.
 
 % Basicamente zerar as linhas e colunas correspondentes aos
 % nodes fixados. No caso aqui, sao todos os graus de liberdade do
-% node 5 + Nod_vh e w2 do node 5 + Nod_vh - 1 (ultimo node da viga
-% horizontal).
-
-%{
-Kgm(:, (Nod_vh + 1)*3 - 2) = 0; Kgm((Nod_vh + 1)*3 - 2, :) = 0; Kgm((Nod_vh + 1)*3 - 2, (Nod_vh + 1)*3 - 2) = 1;
-Kgm(:, (Nod_vh + 1)*3 - 1) = 0; Kgm((Nod_vh + 1)*3 - 1, :) = 0; Kgm((Nod_vh +1)*3 - 1, (Nod_vh + 1)*3 - 1) = 1;
-Kgm(:, (Nod_vh + 1)*3) = 0; Kgm((Nod_vh + 1)*3, :) = 0; Kgm((Nod_vh + 1)*3, (Nod_vh + 1)*3) = 1;
-
-Kgm(:, (Nod_vh)*3 - 2) = 0; Kgm((Nod_vh)*3 - 2, :) = 0; Kgm((Nod_vh)*3 - 2, (Nod_vh)*3 - 2) = 1;
-Kgm(:, (Nod_vh)*3 - 1) = 0; Kgm((Nod_vh)*3 - 1, :) = 0; Kgm((Nod_vh)*3 - 1, (Nod_vh)*3 - 1) = 1;
-
-Mgm(:, (Nod_vh + 1)*3 - 2) = 0; Mgm((Nod_vh + 1)*3 - 2, :) = 0; Mgm((Nod_vh + 1)*3 - 2, (Nod_vh + 1)*3 - 2) = 1;
-Mgm(:, (Nod_vh + 1)*3 - 1) = 0; Mgm((Nod_vh + 1)*3 - 1, :) = 0; Mgm((Nod_vh +1)*3 - 1, (Nod_vh + 1)*3 - 1) = 1;
-Mgm(:, (Nod_vh + 1)*3) = 0; Mgm((Nod_vh + 1)*3, :) = 0; Mgm((Nod_vh + 1)*3, (Nod_vh + 1)*3) = 1;
-
-Mgm(:, (Nod_vh)*3 - 2) = 0; Mgm((Nod_vh)*3 - 2, :) = 0; Mgm((Nod_vh)*3 - 2, (Nod_vh)*3 - 2) = 1;
-Mgm(:, (Nod_vh)*3 - 1) = 0; Mgm((Nod_vh)*3 - 1, :) = 0; Mgm((Nod_vh)*3 - 1, (Nod_vh)*3 - 1) = 1;
-
-% Passo 7 - Encontrar os autovalores de [K -(omega^2)*M]
-
-Kgm(:, (Nod_vh + 1)*3 - 2) = []; Kgm((Nod_vh + 1)*3 - 2, :) = [];
-Kgm(:, (Nod_vh + 1)*3 - 1) = []; Kgm((Nod_vh + 1)*3 - 1, :) = [];
-Kgm(:, (Nod_vh + 1)*3) = []; Kgm((Nod_vh + 1)*3, :) = [];
-
-Kgm(:, (Nod_vh)*3 - 2) = []; Kgm((Nod_vh)*3 - 2, :) = [];
-Kgm(:, (Nod_vh)*3 - 1) = []; Kgm((Nod_vh)*3 - 1, :) = [];
-
-Mgm(:, (Nod_vh + 1)*3 - 2) = []; Mgm((Nod_vh + 1)*3 - 2, :) = [];
-Mgm(:, (Nod_vh + 1)*3 - 1) = []; Mgm((Nod_vh + 1)*3 - 1, :) = [];
-Mgm(:, (Nod_vh + 1)*3) = []; Mgm((Nod_vh + 1)*3, :) = [];
-
-Mgm(:, (Nod_vh)*3 - 2) = []; Mgm((Nod_vh)*3 - 2, :) = [];
-Mgm(:, (Nod_vh)*3 - 1) = []; Mgm((Nod_vh)*3 - 1, :) = [];
-%}
-
-i_cc = [(Nod_vh)*3 - 2, (Nod_vh)*3 - 1, (Nod_vh + 1)*3 - 2, (Nod_vh + 1)*3 - 1, (Nod_vh + 1)*3];
-
-indices = []; % indices das colunas nulas - a serem removidas
-
-%{
-for i=1:size(Kgm, 1)
-    if Kgm(i, :) == zeros(1, size(Kgm, 2))
-        indices(end+1) = i;
-    end
-end
-%}
-
-%xlswrite('Kgm_zeros.xlsx', Mgm)
-
-%Kgm(~any(Kgm, 2), :) = []; %rows
-%Kgm(:, ~any(Kgm, 1)) = []; %columns
-
-%xlswrite('Kgm.xlsx', Kgm)
-
-%xlswrite('Mgm_zeros.xlsx', Mgm)
-
-%Mgm(~any(Mgm, 2), :) = []; %rows
-%Mgm(:, ~any(Mgm, 1)) = []; %columns
-
-%xlswrite('Mgm.xlsx', Mgm)
-
-% Exclui linhas que estão fixadas
+% primeiro node da torre e translacoes do ultimo node da plataforma.
 
 list = (1:Ngdl)';
 i_cc = [(Nod_vh)*3 - 2, (Nod_vh)*3 - 1, (Nod_vh + 1)*3 - 2, (Nod_vh + 1)*3 - 1, (Nod_vh + 1)*3];
 
-id_fix = [((Nod_vh)*3 - 2) ((Nod_vh)*3-1) ((Nod_vh+1)*3-2) ((Nod_vh+1)*3-1) ((Nod_vh+1)*3)]';
-id_free = list(ismember(list,id_fix) == 0);
-Kgm = Kg(id_free,id_free);
-Mgm = Mg(id_free,id_free);
-%[A, V] = eigs(Mgm\Kgm, 6, 'smallestabs');
+id_free = list(ismember(list, i_cc) == 0);
+Kgm = Kg(id_free, id_free);
+Mgm = Mg(id_free, id_free);
 
-%omega_1 = sqrt(diag(V))/(2*pi)
+% Passo 7 - Encontrar os autovalores de [K -(omega^2)*M]
 
-A = Mgm\Kgm;
-[vec, val] = eigs(A, 6, 'smallestabs'); %smallestabs
-val = sqrt(diag(val))/(2*pi);
-val
+[A, V] = eigs(Mgm\Kgm, 6, 'smallestabs');
+omega = sqrt(diag(V))/(2*pi)
 
-if (dx == 2)
+% Passo 8 - Plotar os modos de vibracao
 
-    mod = 3
+if (dx == 1)
+
+    mod = 1
     U = A(:, mod);
 
     U = U';
-    for i=2:size(indices, 2)
-        U = [U(1:indices(i)-1) 0 U(indices(i):end)];
-    end
 
     for i=1:5
         U = [U(1:i_cc(i)-1) 0 U(i_cc(i):end)];    
@@ -375,64 +260,41 @@ if (dx == 2)
 
     U = U';
 
-    freq = omega_1(mod);
+    freq = omega(mod);
     T = 1/freq;
     dt = T/15;
     TF = 5*T;
     t = 0:dt:TF;
     scale = 10;
-
-    for i=1:length(t)
-        coorExag = coords + scale*[ U(1:3:end) U(2:3:end) ]*sin(2*pi*freq*t(i));
-        plot_struct(coorExag, con, '-r');
-        axis([-1 66 -1 24])
-        pause(0.1);
-        clf;
-    end
+    
+    coorExag = coords + scale*[ U(1:3:end) U(2:3:end) ]*sin(2*pi*freq*t(5));
+    
+    figure;
+    plot_struct(coords, coorExag, con, '-r');
     
 end
 
+% =================== Analise Transiente ===================
 
 a0 = 0.1217;
 a1 = 0.0087;
 
+% Retirando o terceiro grau de liberdade das matrizes pois nao serao utilizados.
 Kg2 = Kgm;
-Mg2 = Mgm; % Retirando o terceiro grau de liberdade das matrizes pois nao serao utilizadas.
+Mg2 = Mgm;
 
-%Kg2(3:3:end, :) = []; Kg2(:, 3:3:end) = [];
-%Mg2(3:3:end, :) = []; Mg2(:, 3:3:end) = [];
-%Mg2(131:134, :) = []; Mg2(:, 131:134) = [];
-%Kg2(131:134, :) = []; Kg2(:, 131:134) = [];
-
-%{
-Kg2(~any(Kg2, 2), :) = []; %rows
-Kg2(:, ~any(Kg2, 1)) = []; %columns
-
-Mg2(~any(Mg2, 2), :) = []; %rows
-Mg2(:, ~any(Mg2, 1)) = []; %columns
-%}
-
-%{
-for i=1:size(Kg2, 1)
-    if Kg2(i, :) == zeros(1, size(Kg2, 1))
-        Kg2(i, i) = 1;
-        Mg2(i, i) = 1;
-    end
-end
-%}
-
+% Matriz de amortecimento
 Cgm = a0*Mg2 + a1*Kg2;
 
-va = 2;
+va = 1;
 
 TF = 55/va;
 
-dt = 0.05;
-t = 0:dt:TF;
-
-U1 = zeros(size(Mg2, 1), 1);
-V1 = zeros(size(Mg2, 1), 1);
-A1 = zeros(size(Mg2, 1), 1);
+dt_vec = [0.1; 0.01; 0.005];
+dt1 = 0.1; dt2 = 0.01; dt3 = 0.005;
+t1 = 0:dt1:TF;
+t2 = 0:dt2:TF;
+t3 = 0:dt3:TF;
 
 V = zeros(26, 1);
 Fnod = zeros(size(Mg2, 1), 1);
@@ -440,99 +302,125 @@ Fnod = zeros(size(Mg2, 1), 1);
 beta = 0.25;
 gamma = 0.5;
 
-Meq = Mg2 + dt*gamma*Cgm + dt*dt*beta*Kg2;
+% Prealocacao de vetor para deslocamento do node A para diferentes dts.
+UA_dt1 = zeros(length(t1), 1);
+UA_dt3 = zeros(length(t3), 1);
 
-UA = zeros(length(t), 1);
-UB = zeros(length(t), 1);
-UC = zeros(length(t), 1);
-UF = zeros(length(t), 1);
+% Prealocacao de vetores para deslocamento dos nodes A, B, C e F para dt
+% igual a 0,01.
 
-for i=1:length(t)
-    
-    if (t(i) <= 27/va)
-        N1 = 20;
-    elseif t(i) <= 47/va
-        N1 = va*t(i) - 7;
-    elseif (t(i) > 47/va)
-        N1 = 40;
+UA = zeros(length(t2), 1);
+UB = zeros(length(t2), 1);
+UC = zeros(length(t2), 1);
+UF = zeros(length(t2), 1);
+
+% Loop para aplicacao dos carregamentos e implementacao do metodo Newmark
+% Beta para aceleracao media constante.
+
+for k=1:3
+    if k == 1
+        t = t1;
+    elseif k == 2
+        t = t2;
+    elseif k == 3
+        t = t3;
     end
     
-    if (t(i) <= 20/va)
-        N2 = 20 - va*t(i);
-    elseif (t(i) > 20/va)
-        N2 = 0;
-    end
+    dt = dt_vec(k, 1)
     
-    for j=1:size(V, 1)
+    Meq = Mg2 + dt*gamma*Cgm + dt*dt*beta*Kg2;
     
-        if ( t(i) <= (36 - (9 + j))/va )
-            V(j, 1) = 0;
-        elseif ( t(i) <= (36 + 20 -(9 + j))/va )
-            V(j, 1) = -80*9.8*(1 - cos(2*pi*va*t(i)))/2;
-        elseif (t(i) > (36 + 20 -(9 + j))/va)
-            V(j, 1) = 0;
+    U1 = zeros(size(Mg2, 1), 1);
+    V1 = zeros(size(Mg2, 1), 1);
+    A1 = zeros(size(Mg2, 1), 1);
+    
+    for i=1:length(t)
+
+        if (t(i) <= 27/va)
+            N1 = 20;
+        elseif t(i) <= 47/va
+            N1 = va*t(i) - 7;
+        elseif (t(i) > 47/va)
+            N1 = 40;
         end
+
+        if (t(i) <= 20/va)
+            N2 = 20 - va*t(i);
+        elseif (t(i) > 20/va)
+            N2 = 0;
+        end
+
+        for j=1:size(V, 1)
+
+            if ( t(i) <= (36 - (9 + j))/va )
+                V(j, 1) = 0;
+            elseif ( t(i) <= (36 + 20 -(9 + j))/va )
+                V(j, 1) = -80*9.8*(1 - cos(2*pi*va*t(i)))/2;
+            elseif (t(i) > (36 + 20 -(9 + j))/va)
+                V(j, 1) = 0;
+            end
+
+        end
+
+        q1 = N1*80*9.8/9;
+        q2 = N2*80*9.8/9;
+
+        Fnod(2:3:29) = -q1;
+        Fnod(32:3:107) = V;
+        Fnod(110:3:137) = -q2;
+
+        F2 = Fnod;
         
+        Feq = F2 - Cgm*( V1 + dt*(1-gamma)*A1 ) - Kg2*( U1 + dt*V1 + dt*dt*0.5*(1 - 2*beta)*A1 );
+        
+        A2 = Meq\Feq;
+            
+        U2 = U1 + dt*V1 + dt*dt*0.5*( (1-2*beta)*A1 + 2*beta*A2 );
+        V2 = V1 + dt*( (1-gamma)*A1 + gamma*A2 );
+
+        if k == 1
+            UA_dt1(i, 1) = U2(2, 1);
+        elseif k == 2
+            UA(i, 1) = U2(2, 1);
+            UB(i, 1) = U2(17, 1);
+            UC(i, 1) = U2(29, 1);
+            UF(i, 1) = U2(260, 1);
+        elseif k == 3
+            UA_dt3(i, 1) = U2(2, 1);
+        end
+            
+        U1 = U2; V1 = V2; A1 = A2;
     end
-  
-    q1 = N1*80*9.8/9;
-    q2 = N2*80*9.8/9;
-    
-    %{
-    Fnod(2:2:20) = -q1;
-    Fnod(22:2:72) = V;
-    Fnod(74:2:92) = -q2;
-    %}
-    
-    Fnod(2:3:29) = -q1;
-    Fnod(32:3:107) = V;
-    Fnod(110:3:137) = -q2;
-    
-    F2 = Fnod;
-    
-    %{
-    if (i == 1)
-        U1 = Kg2\Fnod
-    end
-    %}
-    
-    Feq = F2 - Cgm*( V1 + dt*(1-gamma)*A1 ) - Kg2*( U1 + dt*V1 + dt*dt*0.5*(1 - 2*beta)*A1 );
-    A2 = Meq\Feq;
-    U2 = U1 + dt*V1 + dt*dt*0.5*( (1-2*beta)*A1 + 2*beta*A2 );
-    V2 = V1 + dt*( (1-gamma)*A1 + gamma*A2 );
-    
-    
-    UA(i, 1) = U2(2, 1);
-    UB(i, 1) = U2(17, 1);
-    UC(i, 1) = U2(29, 1);
-    UF(i, 1) = U2(260, 1);
-    
-    %{
-    UA(i, 1) = U2(1, 1);
-    UB(i, 1) = U2(7, 1);
-    UC(i, 1) = U2(11, 1);
-    UF(i, 1) = U2(111, 1);
-    %}
-   
-    U1 = U2; V1 = V2; A1 = A2;
     
 end
 
-
-%plot(t, UA)
-%{
+figure;
+plot(t2, UA)
 hold on
-plot(t, UB)
+plot(t2, UB)
 hold on
-plot(t, UC)
+plot(t2, UC)
 hold on
-plot(t, UF)
-%}
+plot(t2, UF)
+legend('Ponto A', 'Ponto B', 'Ponto C', 'Ponto F')
+title('Análise transiente para os pontos A, B, C e F, com passo dt = 0,01s')
 
-% =============== Analise Harmonica ===================
+figure;
+plot(t1, UA_dt1)
+%hold on
+figure;
+plot(t2, UA)
+%hold on
+figure;
+plot(t3, UA_dt3)
+legend('dt = 0.1s', 'dt = 0.01s', 'dt = 0.005s')
+title('Análise transiente para o ponto A com diferentes passos')
 
-df = 0.005;
-freq = 0:df:14;
+
+% =================== Analise Harmonica ===================
+
+df = 0.001;
+freq = 0:df:6;
 omega = 2*pi*freq;
 
 F0 = zeros(size(Mg2, 1), 1);
@@ -555,7 +443,7 @@ for i=1:length(freq)
     
 end
 
-
+figure;
 plot(freq, YA)
 hold on
 plot(freq, YB)
@@ -563,3 +451,5 @@ hold on
 plot(freq, YC)
 hold on
 plot(freq, YF)
+legend('Ponto A', 'Ponto B', 'Ponto C', 'Ponto F')
+title('Diagrama de resposta em frequência para os pontos A, B, C e F')
