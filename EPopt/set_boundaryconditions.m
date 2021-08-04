@@ -9,7 +9,7 @@ for i=1:size(V_cont, 1)
 	val = V_cont(i, 2);
 	FM = FM - KG(:, id)*val;
 	KGM(:, id) = 0; 
-	KGM(id, 0) = 0;
+	KGM(id, :) = 0;
 	KGM(id, id) = 1;
 end
 
