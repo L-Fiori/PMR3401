@@ -7,8 +7,9 @@ nely = 15;
 
 mesh = generate_mesh(Lx, Ly, nelx, nely);
 
-%{
+
 % Plot da malha com os centroides
+figure;
 Nel = size(mesh.con, 1);
 for e=1:Nel
 	xe = mesh.coor(mesh.con(e,:), 1);
@@ -19,7 +20,7 @@ end
 
 plot(mesh.cen(:, 1), mesh.cen(:, 2), '*r');
 axis equal;
-%}
+
 Ngdl = size(mesh.coor, 1);
 
 % Constantes de condutividade
@@ -58,14 +59,15 @@ sigma(list(id1h)) = sigma_h;
 sigma(list(id2h)) = sigma_h;
 
 % Plots de cada regiao da malha
+%figure;
 plot(mesh.cen(:, 1), mesh.cen(:, 2), '*r'); hold on;
 
 plot(mesh.cen(id1a, 1), mesh.cen(id1a, 2), 'ob'); hold on;
 plot(mesh.cen(id2a, 1), mesh.cen(id2a, 2), 'ob'); hold on;
 
-plot(mesh.cen(id1c, 1), mesh.cen(id1c, 2), 'sb'); hold on;
-plot(mesh.cen(id2c, 1), mesh.cen(id2c, 2), 'sb'); hold on;
-plot(mesh.cen(id3c, 1), mesh.cen(id3c, 2), 'sb'); hold on;
+plot(mesh.cen(id1c, 1), mesh.cen(id1c, 2), 'dm'); hold on;
+plot(mesh.cen(id2c, 1), mesh.cen(id2c, 2), 'dm'); hold on;
+plot(mesh.cen(id3c, 1), mesh.cen(id3c, 2), 'dm'); hold on;
 
 plot(mesh.cen(id1h, 1), mesh.cen(id1h, 2), 'og'); hold on;
 plot(mesh.cen(id2h, 1), mesh.cen(id2h, 2), 'og'); hold on;
@@ -74,9 +76,9 @@ axis equal;
 
 % Montagem da matriz global (usando for)
 KG = zeros(Ngdl, Ngdl);
-Ke = k_ele(mesh, 1);
 
 for e=1:Nel
+    Ke = k_ele(mesh, e);
 	id = mesh.con(e, :);
 	KG(id, id) = KG(id, id) + sigma(e)*Ke;
 end
@@ -91,12 +93,11 @@ k_glob = repmat(Ke(:), Nel, 1).*kron(sigma, ones(16, 1));
 KG = sparse(I, J, k_glob);
 %}
 
-
 % Condicoes de contorno
 
 list = (1:Ngdl)';
-dx = 0.02;
-dy = 0.02;
+dx = Lx/nelx;
+dy = Ly/nely;
 id1 = mesh.coor(:, 2) <= dy/2;
 id2 = mesh.coor(:, 2) >= (Ly - dy/2);
 
@@ -110,7 +111,7 @@ V = KGM\FM;
 % Pos-processamento
 
 grad = gradiente(mesh, V);
-q = -[sigma sigma].*grad;
+q = [sigma sigma].*grad;
 
 xn = linspace(0, Lx, nelx+1);
 yn = linspace(0, Ly, nely+1);
@@ -126,18 +127,19 @@ yc2 = linspace((2*dy/3), Ly-dy/3, nely);
 Uc2 = reshape(q(2:2:end, 1), nelx, nely)';
 Vc2 = reshape(q(2:2:end, 2), nelx, nely)';
 
+figure;
 contourf(xn, yn, Vn, 25, 'linestyle', 'none'); hold on;
 axis equal
 xlim([0 Lx]);
 ylim([0 Ly]);
 colorbar;
 
+
 quiv1 = quiver(xc1, yc1, Uc1, Vc1, 'w');
 %quiv1.AutoScaleFactor = 1.4;
 
 quiv2 = quiver(xc2, yc2, Uc2, Vc2, 'w');
 %quiv2.AutoScaleFactor = 1.4;
-
 
 pos1 = [0.06 0.12 0.2 0.04];
 rectangle('Position', pos1, 'Curvature', 0.1, 'facecolor', 'white');
