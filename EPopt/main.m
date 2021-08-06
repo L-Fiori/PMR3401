@@ -134,12 +134,11 @@ xlim([0 Lx]);
 ylim([0 Ly]);
 colorbar;
 
-
 quiv1 = quiver(xc1, yc1, Uc1, Vc1, 'w');
-%quiv1.AutoScaleFactor = 1.4;
+quiv1.AutoScaleFactor = 1.2;
 
 quiv2 = quiver(xc2, yc2, Uc2, Vc2, 'w');
-%quiv2.AutoScaleFactor = 1.4;
+quiv2.AutoScaleFactor = 1.2;
 
 pos1 = [0.06 0.12 0.2 0.04];
 rectangle('Position', pos1, 'Curvature', 0.1, 'facecolor', 'white');
@@ -148,3 +147,47 @@ pos2 = [0.1 0.16 0.12 0.04];
 rectangle('Position', pos2, 'Curvature', 0.1, 'facecolor', 'white');
 
 line([0.1 0.22], [0.16 0.16], 'color', 'white');
+
+% Item E
+
+% Calculo de Im na parte inferior
+
+a = 0;
+b = 0.16;
+n = 16;
+h = (b - a)/n;
+s = q(1, 2) + q(n, 2);
+
+for i=1:2:n-1
+    s = s + 4*q(i, 2);
+end
+
+for i=2:2:n-2
+    s = s + 2*q(i, 2); 
+end
+
+I = (h/3)* s;
+
+Im1 = 0.4*I
+
+% Calculo de Im na parte superior
+
+a = 0;
+b = 0.16;
+n = 16;
+h = (b - a)/n;
+s = q(448, 2) + q(448+n, 2);
+
+for i=1:2:n-1
+    s = s + 4*q(448+i, 2);
+end
+
+for i=2:2:n-2
+    s = s + 2*q(448+i, 2); 
+end
+
+I = (h/3)* s;
+
+Im2 = 0.4*I
+
+R = 250/Im2
